@@ -1,5 +1,6 @@
 import Foundation
 import Supabase
+import Combine
 
 // Single source of truth for all game state.
 // The host device drives game-phase transitions; all clients react via Realtime.
@@ -15,11 +16,23 @@ final class GameViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isLoading = false
 
+    // MARK: - Voice
+
+    let voiceChat = LiveKitService()
+
     // MARK: - Private
 
     private(set) var lastDisplayName: String = ""
     private var realtimeTask: Task<Void, Never>?
+    private var liveKitCancellable: AnyCancellable?
     private var supabase: SupabaseClient { SupabaseService.shared.client }
+
+    init() {
+        // Forward LiveKitService changes so views observing GameViewModel re-render
+        liveKitCancellable = voiceChat.objectWillChange.sink { [weak self] in
+            self?.objectWillChange.send()
+        }
+    }
 
     // MARK: - Computed helpers
 
@@ -99,6 +112,7 @@ final class GameViewModel: ObservableObject {
             self.players = [player]
             self.myPlayer = player
             self.subscribeToRealtime(roomId: room.id)
+            await self.voiceChat.connect(roomId: room.id.uuidString, displayName: displayName)
         }
     }
 
@@ -137,10 +151,12 @@ final class GameViewModel: ObservableObject {
             self.players = existingPlayers
             self.myPlayer = player
             self.subscribeToRealtime(roomId: room.id)
+            await self.voiceChat.connect(roomId: room.id.uuidString, displayName: displayName)
         }
     }
 
     func leaveRoom() {
+        voiceChat.disconnect()
         realtimeTask?.cancel()
         realtimeTask = nil
         room = nil

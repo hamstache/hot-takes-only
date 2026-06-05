@@ -26,6 +26,13 @@ struct ScoreboardView: View {
                         .foregroundStyle(player.id == gameVM.myPlayer?.id ? .pink : .white)
                         .fontWeight(player.id == gameVM.myPlayer?.id ? .semibold : .regular)
 
+                    if gameVM.voiceChat.activeSpeakerNames.contains(player.displayName) {
+                        Image(systemName: "waveform")
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                            .symbolEffect(.pulse)
+                    }
+
                     if player.id == gameVM.currentJudge?.id {
                         Image(systemName: "eyes")
                             .font(.caption)
