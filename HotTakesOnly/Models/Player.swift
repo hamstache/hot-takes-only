@@ -6,6 +6,7 @@ struct Player: Codable, Identifiable, Sendable, Equatable {
     var displayName: String
     var score: Int
     var isHost: Bool
+    var isReady: Bool
     var handIndices: [Int]
     var createdAt: Date?
 
@@ -14,6 +15,7 @@ struct Player: Codable, Identifiable, Sendable, Equatable {
         case roomId      = "room_id"
         case displayName = "display_name"
         case isHost      = "is_host"
+        case isReady     = "is_ready"
         case handIndices = "hand_indices"
         case createdAt   = "created_at"
     }
