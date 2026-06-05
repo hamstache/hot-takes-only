@@ -18,7 +18,6 @@ final class GameViewModel: ObservableObject {
     // MARK: - Private
 
     private var realtimeTask: Task<Void, Never>?
-    private var db: PostgrestClient { SupabaseService.shared.client.from("") }
     private var supabase: SupabaseClient { SupabaseService.shared.client }
 
     // MARK: - Computed helpers
@@ -163,14 +162,15 @@ final class GameViewModel: ObservableObject {
                     .execute()
             }
 
+            let startPayload: [String: AnyJSON] = [
+                "status": .string(GamePhase.submitting.rawValue),
+                "current_round": .integer(1),
+                "judge_index": .integer(0),
+                "black_card_index": .integer(blackCardIndex),
+            ]
             try await self.supabase
                 .from("rooms")
-                .update([
-                    "status": GamePhase.submitting.rawValue,
-                    "current_round": 1,
-                    "judge_index": 0,
-                    "black_card_index": blackCardIndex,
-                ])
+                .update(startPayload)
                 .eq("id", value: room.id.uuidString)
                 .execute()
         }
@@ -274,14 +274,15 @@ final class GameViewModel: ObservableObject {
                     .execute()
             }
 
+            let advancePayload: [String: AnyJSON] = [
+                "status": .string(GamePhase.submitting.rawValue),
+                "current_round": .integer(nextRound),
+                "judge_index": .integer(nextJudgeIndex),
+                "black_card_index": .integer(nextBlackCard),
+            ]
             try await self.supabase
                 .from("rooms")
-                .update([
-                    "status": GamePhase.submitting.rawValue,
-                    "current_round": nextRound,
-                    "judge_index": nextJudgeIndex,
-                    "black_card_index": nextBlackCard,
-                ])
+                .update(advancePayload)
                 .eq("id", value: room.id.uuidString)
                 .execute()
         }
@@ -301,7 +302,12 @@ final class GameViewModel: ObservableObject {
             let playerChanges     = channel.postgresChange(AnyAction.self, schema: "public", table: "players")
             let submissionChanges = channel.postgresChange(AnyAction.self, schema: "public", table: "submissions")
 
-            await channel.subscribe()
+            do {
+                try await channel.subscribeWithError()
+            } catch {
+                self.errorMessage = error.localizedDescription
+                return
+            }
 
             await withTaskGroup(of: Void.self) { group in
                 group.addTask {
@@ -373,6 +379,13 @@ final class GameViewModel: ObservableObject {
                 .execute()
                 .value
             self.submissions = updated
+            if room.status == .submitting, allNonJudgesSubmitted, myPlayer?.isHost == true {
+                try await supabase
+                    .from("rooms")
+                    .update(["status": AnyJSON.string(GamePhase.judging.rawValue)])
+                    .eq("id", value: roomId.uuidString)
+                    .execute()
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

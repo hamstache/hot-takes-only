@@ -94,7 +94,7 @@ struct GameView: View {
                 Image(systemName: "hourglass")
                     .font(.system(size: 40))
                     .foregroundStyle(.orange)
-                    .symbolEffect(.rotate)
+                    .symbolEffect(.pulse)
                 Text("\(gameVM.currentJudge?.displayName ?? "Judge") is choosing…")
                     .font(.headline)
                     .foregroundStyle(.white)
