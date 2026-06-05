@@ -17,8 +17,8 @@ final class GameViewModel: ObservableObject {
 
     // MARK: - Private
 
+    private(set) var lastDisplayName: String = ""
     private var realtimeTask: Task<Void, Never>?
-    private var db: PostgrestClient { SupabaseService.shared.client.from("") }
     private var supabase: SupabaseClient { SupabaseService.shared.client }
 
     // MARK: - Computed helpers
@@ -60,6 +60,10 @@ final class GameViewModel: ObservableObject {
         return submissions.filter { $0.roundNumber == room.currentRound }
     }
 
+    var allPlayersReady: Bool {
+        !players.isEmpty && players.allSatisfy(\.isReady)
+    }
+
     var allNonJudgesSubmitted: Bool {
         guard let judge = currentJudge else { return false }
         let nonJudges = players.filter { $0.id != judge.id }
@@ -90,6 +94,7 @@ final class GameViewModel: ObservableObject {
                 .execute()
                 .value
 
+            self.lastDisplayName = displayName
             self.room = room
             self.players = [player]
             self.myPlayer = player
@@ -127,6 +132,7 @@ final class GameViewModel: ObservableObject {
                 .execute()
                 .value
 
+            self.lastDisplayName = displayName
             self.room = room
             self.players = existingPlayers
             self.myPlayer = player
@@ -142,6 +148,23 @@ final class GameViewModel: ObservableObject {
         submissions = []
         myPlayer = nil
         errorMessage = nil
+    }
+
+    func playAgain() async {
+        let name = lastDisplayName
+        leaveRoom()
+        await createRoom(displayName: name)
+    }
+
+    func readyForNextRound() async {
+        guard let myPlayer else { return }
+        await run {
+            try await self.supabase
+                .from("players")
+                .update(["is_ready": true])
+                .eq("id", value: myPlayer.id.uuidString)
+                .execute()
+        }
     }
 
     // MARK: - Host actions
@@ -163,14 +186,15 @@ final class GameViewModel: ObservableObject {
                     .execute()
             }
 
+            let startPayload: [String: AnyJSON] = [
+                "status": .string(GamePhase.submitting.rawValue),
+                "current_round": .integer(1),
+                "judge_index": .integer(0),
+                "black_card_index": .integer(blackCardIndex),
+            ]
             try await self.supabase
                 .from("rooms")
-                .update([
-                    "status": GamePhase.submitting.rawValue,
-                    "current_round": 1,
-                    "judge_index": 0,
-                    "black_card_index": blackCardIndex,
-                ])
+                .update(startPayload)
                 .eq("id", value: room.id.uuidString)
                 .execute()
         }
@@ -233,7 +257,7 @@ final class GameViewModel: ObservableObject {
     }
 
     func advanceRound() async {
-        guard let room else { return }
+        guard let room, room.status == .roundOver else { return }
 
         await run {
             let topScore = self.players.map(\.score).max() ?? 0
@@ -267,21 +291,26 @@ final class GameViewModel: ObservableObject {
             for player in latestPlayers {
                 let newHand = SampleCards.refillHand(current: player.handIndices, excluding: usedIndices)
                 usedIndices.formUnion(newHand)
+                let playerUpdatePayload: [String: AnyJSON] = [
+                    "hand_indices": .array(newHand.map { .integer($0) }),
+                    "is_ready": .bool(false),
+                ]
                 try await self.supabase
                     .from("players")
-                    .update(["hand_indices": newHand])
+                    .update(playerUpdatePayload)
                     .eq("id", value: player.id.uuidString)
                     .execute()
             }
 
+            let advancePayload: [String: AnyJSON] = [
+                "status": .string(GamePhase.submitting.rawValue),
+                "current_round": .integer(nextRound),
+                "judge_index": .integer(nextJudgeIndex),
+                "black_card_index": .integer(nextBlackCard),
+            ]
             try await self.supabase
                 .from("rooms")
-                .update([
-                    "status": GamePhase.submitting.rawValue,
-                    "current_round": nextRound,
-                    "judge_index": nextJudgeIndex,
-                    "black_card_index": nextBlackCard,
-                ])
+                .update(advancePayload)
                 .eq("id", value: room.id.uuidString)
                 .execute()
         }
@@ -301,7 +330,12 @@ final class GameViewModel: ObservableObject {
             let playerChanges     = channel.postgresChange(AnyAction.self, schema: "public", table: "players")
             let submissionChanges = channel.postgresChange(AnyAction.self, schema: "public", table: "submissions")
 
-            await channel.subscribe()
+            do {
+                try await channel.subscribeWithError()
+            } catch {
+                self.errorMessage = error.localizedDescription
+                return
+            }
 
             await withTaskGroup(of: Void.self) { group in
                 group.addTask {
@@ -353,9 +387,11 @@ final class GameViewModel: ObservableObject {
                 .execute()
                 .value
             self.players = updated
-            // Keep myPlayer in sync
             if let id = myPlayer?.id {
                 self.myPlayer = updated.first(where: { $0.id == id })
+            }
+            if room?.status == .roundOver, allPlayersReady, myPlayer?.isHost == true {
+                await advanceRound()
             }
         } catch {
             errorMessage = error.localizedDescription
@@ -373,6 +409,13 @@ final class GameViewModel: ObservableObject {
                 .execute()
                 .value
             self.submissions = updated
+            if room.status == .submitting, allNonJudgesSubmitted, myPlayer?.isHost == true {
+                try await supabase
+                    .from("rooms")
+                    .update(["status": AnyJSON.string(GamePhase.judging.rawValue)])
+                    .eq("id", value: roomId.uuidString)
+                    .execute()
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

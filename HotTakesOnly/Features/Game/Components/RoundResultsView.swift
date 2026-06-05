@@ -35,16 +35,16 @@ struct RoundResultsView: View {
             ScoreboardView()
                 .padding(.top, 4)
 
-            // Only judge (or host as fallback) advances
-            if gameVM.isJudge || gameVM.myPlayer?.isHost == true {
-                HTButton("Next Round →", color: .pink, isLoading: gameVM.isLoading) {
-                    await gameVM.advanceRound()
-                }
-                .padding(.horizontal, 32)
-            } else {
-                Text("Waiting for judge to advance…")
+            // All players must ready up before the round advances
+            if gameVM.myPlayer?.isReady == true {
+                Text("Waiting for others… (\(gameVM.players.filter(\.isReady).count)/\(gameVM.players.count) ready)")
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.4))
+            } else {
+                HTButton("Ready for Next Round →", color: .pink, isLoading: gameVM.isLoading) {
+                    await gameVM.readyForNextRound()
+                }
+                .padding(.horizontal, 32)
             }
         }
         .padding(.horizontal, 20)

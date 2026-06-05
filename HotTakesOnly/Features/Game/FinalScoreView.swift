@@ -45,12 +45,24 @@ struct FinalScoreView: View {
 
                 Spacer()
 
-                // Play again
+                // Play again / leave
                 VStack(spacing: 12) {
-                    HTButton("Play Again", color: .pink, isLoading: false) {
-                        gameVM.leaveRoom()
+                    if gameVM.myPlayer?.isHost == true {
+                        HTButton("Play Again", color: .pink, isLoading: gameVM.isLoading) {
+                            await gameVM.playAgain()
+                        }
+                        .padding(.horizontal, 32)
+                    } else {
+                        HTButton("Play Again", color: .pink, isLoading: false) {
+                            gameVM.leaveRoom()
+                        }
+                        .padding(.horizontal, 32)
+                        Text("Your name is saved — join the new room code from the host.")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.4))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
                     }
-                    .padding(.horizontal, 32)
 
                     Button("Leave") {
                         gameVM.leaveRoom()
