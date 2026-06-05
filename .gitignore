@@ -22,3 +22,6 @@ xcuserdata/
 
 # Claude Ignore file
 .claudeignore
+
+# VSCode
+.vscode/
