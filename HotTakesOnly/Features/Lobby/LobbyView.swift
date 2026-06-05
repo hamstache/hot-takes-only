@@ -3,7 +3,7 @@ import SwiftUI
 struct LobbyView: View {
     @EnvironmentObject var gameVM: GameViewModel
 
-    @State private var displayName = ""
+    @AppStorage("lastDisplayName") private var displayName = ""
     @State private var roomCode = ""
     @State private var isJoining = false
     @FocusState private var focusedField: Field?

@@ -17,6 +17,7 @@ final class GameViewModel: ObservableObject {
 
     // MARK: - Private
 
+    private(set) var lastDisplayName: String = ""
     private var realtimeTask: Task<Void, Never>?
     private var supabase: SupabaseClient { SupabaseService.shared.client }
 
@@ -59,6 +60,10 @@ final class GameViewModel: ObservableObject {
         return submissions.filter { $0.roundNumber == room.currentRound }
     }
 
+    var allPlayersReady: Bool {
+        !players.isEmpty && players.allSatisfy(\.isReady)
+    }
+
     var allNonJudgesSubmitted: Bool {
         guard let judge = currentJudge else { return false }
         let nonJudges = players.filter { $0.id != judge.id }
@@ -89,6 +94,7 @@ final class GameViewModel: ObservableObject {
                 .execute()
                 .value
 
+            self.lastDisplayName = displayName
             self.room = room
             self.players = [player]
             self.myPlayer = player
@@ -126,6 +132,7 @@ final class GameViewModel: ObservableObject {
                 .execute()
                 .value
 
+            self.lastDisplayName = displayName
             self.room = room
             self.players = existingPlayers
             self.myPlayer = player
@@ -141,6 +148,23 @@ final class GameViewModel: ObservableObject {
         submissions = []
         myPlayer = nil
         errorMessage = nil
+    }
+
+    func playAgain() async {
+        let name = lastDisplayName
+        leaveRoom()
+        await createRoom(displayName: name)
+    }
+
+    func readyForNextRound() async {
+        guard let myPlayer else { return }
+        await run {
+            try await self.supabase
+                .from("players")
+                .update(["is_ready": true])
+                .eq("id", value: myPlayer.id.uuidString)
+                .execute()
+        }
     }
 
     // MARK: - Host actions
@@ -233,7 +257,7 @@ final class GameViewModel: ObservableObject {
     }
 
     func advanceRound() async {
-        guard let room else { return }
+        guard let room, room.status == .roundOver else { return }
 
         await run {
             let topScore = self.players.map(\.score).max() ?? 0
@@ -267,9 +291,13 @@ final class GameViewModel: ObservableObject {
             for player in latestPlayers {
                 let newHand = SampleCards.refillHand(current: player.handIndices, excluding: usedIndices)
                 usedIndices.formUnion(newHand)
+                let playerUpdatePayload: [String: AnyJSON] = [
+                    "hand_indices": .array(newHand.map { .integer($0) }),
+                    "is_ready": .bool(false),
+                ]
                 try await self.supabase
                     .from("players")
-                    .update(["hand_indices": newHand])
+                    .update(playerUpdatePayload)
                     .eq("id", value: player.id.uuidString)
                     .execute()
             }
@@ -359,9 +387,11 @@ final class GameViewModel: ObservableObject {
                 .execute()
                 .value
             self.players = updated
-            // Keep myPlayer in sync
             if let id = myPlayer?.id {
                 self.myPlayer = updated.first(where: { $0.id == id })
+            }
+            if room?.status == .roundOver, allPlayersReady, myPlayer?.isHost == true {
+                await advanceRound()
             }
         } catch {
             errorMessage = error.localizedDescription
