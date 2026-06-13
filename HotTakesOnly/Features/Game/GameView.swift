@@ -121,8 +121,38 @@ private struct GameHeader: View {
                 }
             }
             Spacer()
+            if gameVM.voiceChat.isConnected {
+                PushToTalkButton()
+                    .padding(.trailing, 8)
+            }
             ScorePill()
         }
+    }
+}
+
+private struct PushToTalkButton: View {
+    @EnvironmentObject var gameVM: GameViewModel
+
+    var body: some View {
+        let speaking = gameVM.voiceChat.isSpeaking
+        Image(systemName: speaking ? "mic.fill" : "mic.slash.fill")
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(speaking ? .green : .white.opacity(0.4))
+            .padding(8)
+            .background(speaking ? Color.green.opacity(0.2) : Color.white.opacity(0.08))
+            .clipShape(Circle())
+            .animation(.easeInOut(duration: 0.15), value: speaking)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        if !gameVM.voiceChat.isSpeaking {
+                            gameVM.voiceChat.beginSpeaking()
+                        }
+                    }
+                    .onEnded { _ in
+                        gameVM.voiceChat.endSpeaking()
+                    }
+            )
     }
 }
 
