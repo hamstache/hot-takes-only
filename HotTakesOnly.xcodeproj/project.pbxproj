@@ -25,6 +25,9 @@
 		D942F821ED7821B3DA326711 /* ScoreboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427E04BA1295DE8552CF4C98 /* ScoreboardView.swift */; };
 		DA704484D8ED966074E8C4B7 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E252FABE489EF9168D425EE /* SupabaseService.swift */; };
 		DC0C6D8F896E651B96C4A6FF /* WhiteCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B28ACC2814518C9214AE536 /* WhiteCardView.swift */; };
+		DF50720C2FDCE66F00B3A086 /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = DF50720B2FDCE66F00B3A086 /* LiveKit */; };
+		DF50720E2FDCE71000B3A086 /* LiveKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF50720D2FDCE71000B3A086 /* LiveKitService.swift */; };
+		DFD27EE33001E98B0063050E /* QuickChatOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFD27EE23001E98B0063050E /* QuickChatOverlay.swift */; };
 		EFC583FE9B33D93ED3DE3EA2 /* SupabaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6427BBA3AA76156260408009 /* SupabaseConfig.swift */; };
 		F5D43DA102D69CC318656045 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A434466F424FFD5ACFCB48EF /* GameView.swift */; };
 /* End PBXBuildFile section */
@@ -41,13 +44,15 @@
 		938D2ECDFD492EFD38D52055 /* FinalScoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinalScoreView.swift; sourceTree = "<group>"; };
 		97E535D4A6915BE73F3CA8D5 /* WaitingRoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitingRoomView.swift; sourceTree = "<group>"; };
 		9B28ACC2814518C9214AE536 /* WhiteCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiteCardView.swift; sourceTree = "<group>"; };
-		A374BDC7FF3C10D3C988A5C1 /* HotTakesOnly.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HotTakesOnly.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A374BDC7FF3C10D3C988A5C1 /* HotTakesOnly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HotTakesOnly.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A434466F424FFD5ACFCB48EF /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		A56B2DF7B38C61C8B6DEFADD /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
 		AF8E6C1028EB021A9EC67B16 /* SampleCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleCards.swift; sourceTree = "<group>"; };
 		BE88DA46BD6BC211C0D6B848 /* HandView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandView.swift; sourceTree = "<group>"; };
 		DADAE7EE0FE9F1047EADB91E /* Room.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Room.swift; sourceTree = "<group>"; };
 		DC6B01B6773F0E2DEB7D2047 /* LobbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LobbyView.swift; sourceTree = "<group>"; };
+		DF50720D2FDCE71000B3A086 /* LiveKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveKitService.swift; sourceTree = "<group>"; };
+		DFD27EE23001E98B0063050E /* QuickChatOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickChatOverlay.swift; sourceTree = "<group>"; };
 		E5C7C7C646D47C87F4082BF5 /* JudgingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JudgingView.swift; sourceTree = "<group>"; };
 		E84840E034FE013636A3918A /* RoundResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundResultsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -58,6 +63,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5C88961B69EB099FDB20C2F6 /* Supabase in Frameworks */,
+				DF50720C2FDCE66F00B3A086 /* LiveKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,6 +104,7 @@
 				E84840E034FE013636A3918A /* RoundResultsView.swift */,
 				427E04BA1295DE8552CF4C98 /* ScoreboardView.swift */,
 				9B28ACC2814518C9214AE536 /* WhiteCardView.swift */,
+				DFD27EE23001E98B0063050E /* QuickChatOverlay.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -164,6 +171,7 @@
 		A8D9B3D3E77828DFADAABE50 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				DF50720D2FDCE71000B3A086 /* LiveKitService.swift */,
 				A56B2DF7B38C61C8B6DEFADD /* GameViewModel.swift */,
 				3E252FABE489EF9168D425EE /* SupabaseService.swift */,
 			);
@@ -204,6 +212,7 @@
 			name = HotTakesOnly;
 			packageProductDependencies = (
 				84EC2EAAA8B6AF5651BFC258 /* Supabase */,
+				DF50720B2FDCE66F00B3A086 /* LiveKit */,
 			);
 			productName = HotTakesOnly;
 			productReference = A374BDC7FF3C10D3C988A5C1 /* HotTakesOnly.app */;
@@ -216,7 +225,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1600;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					4480932F8180EC326B540F0C = {
 						DevelopmentTeam = "";
@@ -235,6 +244,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				977271FF319B51584ED9A1ED /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				DF50720A2FDCE66F00B3A086 /* XCRemoteSwiftPackageReference "client-sdk-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8C171267AA702973D409D80E /* Products */;
@@ -278,6 +288,8 @@
 				9AA9532BB54FA92D197D52CE /* Submission.swift in Sources */,
 				EFC583FE9B33D93ED3DE3EA2 /* SupabaseConfig.swift in Sources */,
 				DA704484D8ED966074E8C4B7 /* SupabaseService.swift in Sources */,
+				DFD27EE33001E98B0063050E /* QuickChatOverlay.swift in Sources */,
+				DF50720E2FDCE71000B3A086 /* LiveKitService.swift in Sources */,
 				758725ECA31F077AC0C77F7B /* WaitingRoomView.swift in Sources */,
 				DC0C6D8F896E651B96C4A6FF /* WhiteCardView.swift in Sources */,
 			);
@@ -295,6 +307,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "HotTakesOnly uses the microphone for live voice chat with other players.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -348,6 +361,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -361,6 +375,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -376,6 +391,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "HotTakesOnly uses the microphone for live voice chat with other players.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -429,6 +445,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -449,6 +466,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -487,6 +505,14 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		DF50720A2FDCE66F00B3A086 /* XCRemoteSwiftPackageReference "client-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/livekit/client-sdk-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.15.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -494,6 +520,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 977271FF319B51584ED9A1ED /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		DF50720B2FDCE66F00B3A086 /* LiveKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF50720A2FDCE66F00B3A086 /* XCRemoteSwiftPackageReference "client-sdk-swift" */;
+			productName = LiveKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -16,15 +16,21 @@ final class GameViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isLoading = false
 
-    // MARK: - Voice
+    // MARK: - Voice (deferred — stub only)
 
     let voiceChat = LiveKitService()
+
+    // MARK: - Quick Chat
+
+    @Published var latestQuickChat: QuickChatMessage?
 
     // MARK: - Private
 
     private(set) var lastDisplayName: String = ""
     private var realtimeTask: Task<Void, Never>?
     private var liveKitCancellable: AnyCancellable?
+    private var gameChannel: RealtimeChannelV2?
+    private var quickChatClearTask: Task<Void, Never>?
     private var supabase: SupabaseClient { SupabaseService.shared.client }
 
     init() {
@@ -159,11 +165,37 @@ final class GameViewModel: ObservableObject {
         voiceChat.disconnect()
         realtimeTask?.cancel()
         realtimeTask = nil
+        quickChatClearTask?.cancel()
+        quickChatClearTask = nil
+        gameChannel = nil
         room = nil
         players = []
         submissions = []
         myPlayer = nil
         errorMessage = nil
+        latestQuickChat = nil
+    }
+
+    // MARK: - Quick Chat
+
+    func sendQuickChat(_ message: String) async {
+        let from = myPlayer?.displayName ?? lastDisplayName
+        showQuickChat(from: from, message: message)
+        guard let channel = gameChannel else { return }
+        await channel.broadcast(
+            event: "quickchat",
+            message: ["from": AnyJSON.string(from), "message": AnyJSON.string(message)]
+        )
+    }
+
+    private func showQuickChat(from: String, message: String) {
+        quickChatClearTask?.cancel()
+        latestQuickChat = QuickChatMessage(from: from, message: message)
+        quickChatClearTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard !Task.isCancelled else { return }
+            self?.latestQuickChat = nil
+        }
     }
 
     func playAgain() async {
@@ -341,10 +373,12 @@ final class GameViewModel: ObservableObject {
             guard let self else { return }
 
             let channel = self.supabase.realtimeV2.channel("game:\(roomId.uuidString)")
+            self.gameChannel = channel
 
             let roomChanges       = channel.postgresChange(AnyAction.self, schema: "public", table: "rooms")
             let playerChanges     = channel.postgresChange(AnyAction.self, schema: "public", table: "players")
             let submissionChanges = channel.postgresChange(AnyAction.self, schema: "public", table: "submissions")
+            let quickChatStream   = channel.broadcastStream(event: "quickchat")
 
             do {
                 try await channel.subscribeWithError()
@@ -370,6 +404,18 @@ final class GameViewModel: ObservableObject {
                     for await _ in submissionChanges {
                         guard !Task.isCancelled else { return }
                         await self.refreshSubmissions(roomId: roomId)
+                    }
+                }
+                group.addTask {
+                    for await payload in quickChatStream {
+                        guard !Task.isCancelled else { return }
+                        if case let .object(inner) = payload["payload"],
+                           let fromJSON = inner["from"],
+                           let messageJSON = inner["message"],
+                           case let .string(from) = fromJSON,
+                           case let .string(message) = messageJSON {
+                            await self.showQuickChat(from: from, message: message)
+                        }
                     }
                 }
             }
