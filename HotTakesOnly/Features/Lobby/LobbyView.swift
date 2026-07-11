@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LobbyView: View {
     @EnvironmentObject var gameVM: GameViewModel
+    @ObservedObject private var auth = AuthService.shared
 
     @AppStorage("lastDisplayName") private var displayName = ""
     @State private var roomCode = ""
@@ -71,6 +72,46 @@ struct LobbyView: View {
                             withAnimation { isJoining = true }
                         }
                         .disabled(displayName.trimmed.isEmpty)
+                    }
+                }
+                .padding(.horizontal, 32)
+
+                Spacer().frame(height: 24)
+
+                // Sign in with Apple — satisfies App Store requirement and pre-fills name
+                VStack(spacing: 12) {
+                    HStack {
+                        Rectangle().frame(height: 1).foregroundStyle(.white.opacity(0.15))
+                        Text("or").font(.caption).foregroundStyle(.white.opacity(0.4))
+                        Rectangle().frame(height: 1).foregroundStyle(.white.opacity(0.15))
+                    }
+
+                    if auth.isSignedInWithApple {
+                        Label("Signed in with Apple", systemImage: "checkmark.seal.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(.green)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                    } else {
+                        Button {
+                            Task {
+                                if let name = await AuthService.shared.signInWithApple(),
+                                   displayName.trimmed.isEmpty {
+                                    displayName = name
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "apple.logo")
+                                Text("Sign in with Apple")
+                                    .font(.headline)
+                            }
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
                     }
                 }
                 .padding(.horizontal, 32)

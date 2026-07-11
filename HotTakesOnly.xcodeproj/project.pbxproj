@@ -31,6 +31,8 @@
 		51BF51F66071436299D07A4D /* TVGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A81052EBD648AAAAE83ED3 /* TVGameView.swift */; };
 		AA13BB14CC15DD16EE17FF18 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA07BB08CC09DD10EE11FF12 /* AppDelegate.swift */; };
 		AA25BB26CC27DD28EE29FF30 /* ExternalDisplaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA19BB20CC21DD22EE23FF24 /* ExternalDisplaySceneDelegate.swift */; };
+		BC08CD09DE10EF11FA121314 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC01CD02DE03EF04FA050607 /* AuthService.swift */; };
+		BC23CD24DE25EF26FA272829 /* PrivacyInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BC1CCD1DDE1EEF1FFA202122 /* PrivacyInfo.plist */; };
 		EFC583FE9B33D93ED3DE3EA2 /* SupabaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6427BBA3AA76156260408009 /* SupabaseConfig.swift */; };
 		F5D43DA102D69CC318656045 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A434466F424FFD5ACFCB48EF /* GameView.swift */; };
 /* End PBXBuildFile section */
@@ -60,6 +62,9 @@
 		AA01BB02CC03DD04EE05FF06 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA07BB08CC09DD10EE11FF12 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AA19BB20CC21DD22EE23FF24 /* ExternalDisplaySceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalDisplaySceneDelegate.swift; sourceTree = "<group>"; };
+		BC01CD02DE03EF04FA050607 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		BC15CD16DE17EF18FA191A1B /* HotTakesOnly.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HotTakesOnly.entitlements; sourceTree = "<group>"; };
+		BC1CCD1DDE1EEF1FFA202122 /* PrivacyInfo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.plist; sourceTree = "<group>"; };
 		E5C7C7C646D47C87F4082BF5 /* JudgingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JudgingView.swift; sourceTree = "<group>"; };
 		E84840E034FE013636A3918A /* RoundResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundResultsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -176,6 +181,7 @@
 			isa = PBXGroup;
 			children = (
 				AA01BB02CC03DD04EE05FF06 /* Info.plist */,
+				BC15CD16DE17EF18FA191A1B /* HotTakesOnly.entitlements */,
 				07920990430E09E2AEF250EF /* App */,
 				52500746EB98E99326219728 /* Config */,
 				4F5D645D08E4CE83B270989A /* Data */,
@@ -190,6 +196,7 @@
 		A8D9B3D3E77828DFADAABE50 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				BC01CD02DE03EF04FA050607 /* AuthService.swift */,
 				DF50720D2FDCE71000B3A086 /* LiveKitService.swift */,
 				A56B2DF7B38C61C8B6DEFADD /* GameViewModel.swift */,
 				3E252FABE489EF9168D425EE /* SupabaseService.swift */,
@@ -209,6 +216,7 @@
 			isa = PBXGroup;
 			children = (
 				2925DEB06EF8DBC646773F59 /* Assets.xcassets */,
+				BC1CCD1DDE1EEF1FFA202122 /* PrivacyInfo.plist */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -281,6 +289,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D409406548262B2541984DF /* Assets.xcassets in Resources */,
+				BC23CD24DE25EF26FA272829 /* PrivacyInfo.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -311,6 +320,7 @@
 				51BF51F66071436299D07A4D /* TVGameView.swift in Sources */,
 				AA13BB14CC15DD16EE17FF18 /* AppDelegate.swift in Sources */,
 				AA25BB26CC27DD28EE29FF30 /* ExternalDisplaySceneDelegate.swift in Sources */,
+				BC08CD09DE10EF11FA121314 /* AuthService.swift in Sources */,
 				DF50720E2FDCE71000B3A086 /* LiveKitService.swift in Sources */,
 				758725ECA31F077AC0C77F7B /* WaitingRoomView.swift in Sources */,
 				DC0C6D8F896E651B96C4A6FF /* WhiteCardView.swift in Sources */,
@@ -324,6 +334,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HotTakesOnly/HotTakesOnly.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -406,6 +417,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = HotTakesOnly/HotTakesOnly.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;

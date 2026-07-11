@@ -95,6 +95,7 @@ final class GameViewModel: ObservableObject {
     // MARK: - Room lifecycle
 
     func createRoom(displayName: String) async {
+        await AuthService.shared.ensureSession()
         await run {
             let code = self.randomCode()
             let newRoom = NewRoom(code: code, maxRounds: 5)
@@ -126,6 +127,7 @@ final class GameViewModel: ObservableObject {
     }
 
     func joinRoom(code: String, displayName: String) async {
+        await AuthService.shared.ensureSession()
         await run {
             let rooms: [Room] = try await self.supabase
                 .from("rooms")
@@ -438,24 +440,11 @@ final class GameViewModel: ObservableObject {
     }
 
     private func evictStalePlayers(roomId: UUID) async {
+        struct Params: Encodable { let p_room_id: String }
         do {
-            let fresh: [Player] = try await supabase
-                .from("players")
-                .select()
-                .eq("room_id", value: roomId.uuidString)
+            try await supabase
+                .rpc("evict_stale_players", params: Params(p_room_id: roomId.uuidString))
                 .execute()
-                .value
-            let staleThreshold = Date().addingTimeInterval(-10)
-            for stale in fresh where stale.id != myPlayer?.id {
-                guard let ping = stale.lastPing, ping < staleThreshold else { continue }
-                do {
-                    try await supabase
-                        .from("players")
-                        .delete()
-                        .eq("id", value: stale.id.uuidString)
-                        .execute()
-                } catch {}
-            }
         } catch {}
     }
 

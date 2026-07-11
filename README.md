@@ -13,7 +13,7 @@ This repo contains **Prototype v1** — the core game loop with Supabase Realtim
 | State | `ObservableObject` + `@EnvironmentObject` | Single source of truth via `GameViewModel` |
 | Backend | Supabase (Postgres + Realtime) | Sub-50ms broadcast latency, free at <50K MAU, SQL flexibility |
 | Real-time | Supabase `realtimeV2` channels (`postgres_changes`) | Event-driven game state — no polling |
-| Auth | None (v1 prototype) | Display name + device UUID; add Sign in with Apple for v2 |
+| Auth | Supabase Anonymous Auth + Sign in with Apple | Every device gets a JWT on launch; optional SIWA for persistent identity |
 | Cards | Hardcoded Swift arrays | No DB table needed for prototype; swap for user-generated content later |
 
 ---
@@ -35,6 +35,7 @@ HotTakesOnly/
 │   └── SampleCards.swift        # 15 black cards, 50 white cards + deal helpers
 ├── Services/
 │   ├── SupabaseService.swift    # Singleton SupabaseClient wrapper
+│   ├── AuthService.swift        # Anonymous sign-in on launch + Sign in with Apple flow
 │   ├── LiveKitService.swift     # LiveKit voice chat stub (deferred to post-launch)
 │   └── GameViewModel.swift      # All game logic, Supabase ops, Realtime subscriptions
 ├── Features/
@@ -55,8 +56,10 @@ HotTakesOnly/
 │   └── TV/
 │       ├── TVGameView.swift              # AirPlay second-screen game display
 │       └── ExternalDisplaySceneDelegate.swift # Routes external UIScreen to TVGameView
+├── HotTakesOnly.entitlements    # Sign in with Apple capability declaration
 └── Resources/
-    └── Assets.xcassets/
+    ├── Assets.xcassets/
+    └── PrivacyInfo.plist        # iOS 17+ App Store privacy manifest
 ```
 
 ### Game state machine
@@ -110,27 +113,31 @@ Replace with direct record decoding from `AnyAction.newRecord` for production ef
 Go to [supabase.com](https://supabase.com) → New Project.  
 Note the **Project URL** and **anon public key** from Settings → API.
 
-### 2. Run the database migrations
+### 2. Enable Anonymous Sign-In
+
+In the Supabase dashboard, go to **Authentication → Providers → Anonymous** and toggle it on. Save.
+
+Every device signs in anonymously on launch so `auth.uid()` is always set — this is required for RLS policies to function.
+
+### 3. Run the database migrations
 
 In the Supabase dashboard, go to **SQL Editor → New Query** and run each migration in order:
 
 ```
-supabase/migrations/001_initial_schema.sql   # rooms, players, submissions tables + RLS + Realtime
+supabase/migrations/001_initial_schema.sql   # rooms, players, submissions tables + open RLS + Realtime
 supabase/migrations/002_add_is_ready.sql     # is_ready column on players
-```
-
-```
 supabase/migrations/003_add_last_ping.sql    # last_ping column for heartbeat disconnect detection
+supabase/migrations/004_add_auth_rls.sql     # auth_user_id on players, scoped RLS, evict_stale_players RPC
 ```
 
-This adds the `last_ping` column used by the heartbeat system. Without it, disconnected players are never evicted.
+Migration 004 replaces the open prototype policies with per-player row ownership and adds the `evict_stale_players` Postgres function used by the heartbeat system.
 
-### 3. Enable Realtime replication
+### 4. Enable Realtime replication
 
 Go to **Database → Replication** in the dashboard.  
 Verify that `rooms`, `players`, and `submissions` appear under the `supabase_realtime` publication (the migration SQL handles this, but confirm it's toggled on).
 
-### 4. Add your credentials
+### 5. Add your credentials
 
 Open [HotTakesOnly/Config/SupabaseConfig.swift](HotTakesOnly/Config/SupabaseConfig.swift) and fill in:
 
@@ -141,7 +148,7 @@ static let anonKey = "YOUR_ANON_KEY"
 
 > **Never commit real credentials.** Add `SupabaseConfig.swift` to `.gitignore`, or use a `.xcconfig` file with environment variable injection for CI.
 
-### 5. Open in Xcode and run
+### 6. Open in Xcode and run
 
 ```bash
 open HotTakesOnly.xcodeproj
@@ -198,10 +205,12 @@ If it doesn't update, check:
 | Quick chat | Supabase Broadcast toast overlay | ✅ Done |
 | AirPlay second screen | `TVGameView` on external `UIScreen` | ✅ Done |
 | Disconnect detection | Heartbeat + grace-timer eviction | ✅ Done |
+| Anonymous auth | Every device gets a JWT on launch via Supabase anon sign-in | ✅ Done |
+| Sign in with Apple | Optional SIWA flow; pre-fills name; App Store compliant | ✅ Done |
+| `PrivacyInfo.plist` | Required privacy manifest for App Store (iOS 17+) | ✅ Done |
+| Supabase RLS (tighten) | Per-player row ownership; `evict_stale_players` RPC | ✅ Done |
 | CI/CD | Xcode Cloud + TestFlight automated builds | 🔲 Pending |
-| Sign in with Apple + Keychain | PKCE flow, persistent identity | 🔲 Pre-launch |
-| `PrivacyInfo.plist` | Required for App Store submission (iOS 17+) | 🔲 Pre-launch |
-| Supabase RLS (tighten) | Per-player row ownership, remove open policies | 🔲 Pre-launch |
+| App Store Connect | Bundle ID registration + team ID in Xcode | 🔲 Pending |
 | Move game logic to Edge Functions | Cheat-resistant authoritative server | 🔲 Post-launch |
 | LiveKit voice chat | `client-sdk-swift` per-room audio | 🔲 Post-launch |
 
@@ -212,5 +221,5 @@ If it doesn't update, check:
 - **No reconnection** — if a player is evicted (missed heartbeats) and returns, they land on the lobby screen; they cannot rejoin the in-progress game
 - **No card pool limits** — with many rounds, the 50-card white deck can be exhausted; add more cards or a shuffle/reset mechanism
 - **Host-driven logic** — the host client writes game state; in production, use Supabase Edge Functions as the authoritative game server
-- **No auth** — player identity is scoped to the app session; add Sign in with Apple for persistence and friend lists
-- **Open RLS policies** — anyone can read/write any room; tighten with per-player row ownership before public launch
+- **Anonymous identity only by default** — player identity lasts for the app session; Sign in with Apple links it to a persistent Apple ID but friend lists and cross-session history are not yet built
+- **SIWA requires real device** — Sign in with Apple cannot be tested in the simulator; requires a physical device with an Apple ID and your Apple Developer team ID set in Xcode signing settings

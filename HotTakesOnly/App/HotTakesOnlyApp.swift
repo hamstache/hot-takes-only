@@ -8,6 +8,9 @@ struct HotTakesOnlyApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(appDelegate.gameVM)
+                .task {
+                    await AuthService.shared.ensureSession()
+                }
         }
     }
 }
