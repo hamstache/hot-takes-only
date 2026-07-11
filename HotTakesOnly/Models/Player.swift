@@ -9,6 +9,7 @@ struct Player: Codable, Identifiable, Sendable, Equatable {
     var isReady: Bool
     var handIndices: [Int]
     var createdAt: Date?
+    var lastPing: Date?
 
     enum CodingKeys: String, CodingKey {
         case id, score
@@ -18,6 +19,7 @@ struct Player: Codable, Identifiable, Sendable, Equatable {
         case isReady     = "is_ready"
         case handIndices = "hand_indices"
         case createdAt   = "created_at"
+        case lastPing    = "last_ping"
     }
 }
 

@@ -23,32 +23,38 @@ This repo contains **Prototype v1** — the core game loop with Supabase Realtim
 ```
 HotTakesOnly/
 ├── App/
-│   └── HotTakesOnlyApp.swift     # @main + RootView (state-driven navigation)
+│   ├── HotTakesOnlyApp.swift     # @main + RootView (state-driven navigation)
+│   └── AppDelegate.swift         # Background task + grace-timer disconnect detection
 ├── Config/
 │   └── SupabaseConfig.swift      # Project URL + anon key (fill in before running)
 ├── Models/
 │   ├── Room.swift                # Room + GamePhase enum + NewRoom insert payload
-│   ├── Player.swift              # Player + NewPlayer
+│   ├── Player.swift              # Player + NewPlayer (includes last_ping for heartbeat)
 │   └── Submission.swift         # Submission + NewSubmission
 ├── Data/
 │   └── SampleCards.swift        # 15 black cards, 50 white cards + deal helpers
 ├── Services/
 │   ├── SupabaseService.swift    # Singleton SupabaseClient wrapper
+│   ├── LiveKitService.swift     # LiveKit voice chat stub (deferred to post-launch)
 │   └── GameViewModel.swift      # All game logic, Supabase ops, Realtime subscriptions
 ├── Features/
 │   ├── Lobby/
 │   │   ├── LobbyView.swift       # Name entry + create/join flow
 │   │   └── WaitingRoomView.swift # Room code display + player list + Start button
-│   └── Game/
-│       ├── GameView.swift        # Phase container (submitting / judging / round-over)
-│       ├── FinalScoreView.swift  # End-of-game leaderboard
-│       └── Components/
-│           ├── BlackCardView.swift    # The prompt card (black)
-│           ├── WhiteCardView.swift    # Answer card (white, reused in hand + judging)
-│           ├── HandView.swift         # Horizontal scroll of player's hand
-│           ├── JudgingView.swift      # Judge picks winner from submitted cards
-│           ├── RoundResultsView.swift # Winner reveal + scoreboard
-│           └── ScoreboardView.swift   # Sorted player scores
+│   ├── Game/
+│   │   ├── GameView.swift        # Phase container (submitting / judging / round-over)
+│   │   ├── FinalScoreView.swift  # End-of-game leaderboard
+│   │   └── Components/
+│   │       ├── BlackCardView.swift    # The prompt card (black)
+│   │       ├── WhiteCardView.swift    # Answer card (white, reused in hand + judging)
+│   │       ├── HandView.swift         # Horizontal scroll of player's hand
+│   │       ├── JudgingView.swift      # Judge picks winner from submitted cards
+│   │       ├── RoundResultsView.swift # Winner reveal + scoreboard
+│   │       ├── ScoreboardView.swift   # Sorted player scores
+│   │       └── QuickChatOverlay.swift # Floating toast for broadcast quick-chat messages
+│   └── TV/
+│       ├── TVGameView.swift              # AirPlay second-screen game display
+│       └── ExternalDisplaySceneDelegate.swift # Routes external UIScreen to TVGameView
 └── Resources/
     └── Assets.xcassets/
 ```
@@ -104,15 +110,20 @@ Replace with direct record decoding from `AnyAction.newRecord` for production ef
 Go to [supabase.com](https://supabase.com) → New Project.  
 Note the **Project URL** and **anon public key** from Settings → API.
 
-### 2. Run the database migration
+### 2. Run the database migrations
 
-In the Supabase dashboard, go to **SQL Editor → New Query**, paste the contents of:
+In the Supabase dashboard, go to **SQL Editor → New Query** and run each migration in order:
 
 ```
-supabase/migrations/001_initial_schema.sql
+supabase/migrations/001_initial_schema.sql   # rooms, players, submissions tables + RLS + Realtime
+supabase/migrations/002_add_is_ready.sql     # is_ready column on players
 ```
 
-Run it. This creates the `rooms`, `players`, and `submissions` tables, enables RLS with open prototype policies, and adds the tables to the Realtime publication.
+```
+supabase/migrations/003_add_last_ping.sql    # last_ping column for heartbeat disconnect detection
+```
+
+This adds the `last_ping` column used by the heartbeat system. Without it, disconnected players are never evicted.
 
 ### 3. Enable Realtime replication
 
@@ -179,23 +190,26 @@ If it doesn't update, check:
 
 ---
 
-## Next steps (from the research report)
+## Next steps
 
-| Step | What | Why |
+| Step | What | Status |
 |---|---|---|
-| **v1 complete** | Core game loop | This repo ✓ |
-| **Week 2–3** | LiveKit voice chat | Add `client-sdk-swift` via SPM; spin up a LiveKit Cloud room per game session |
-| **Week 3** | Quick chat (radial menu) | Long-press gesture → SwiftUI radial overlay → Supabase Broadcast event |
-| **Week 4–6** | AirPlay second screen | Detect `UIScreen.screens`, render `TVGameView` to secondary `UIWindow` |
-| **Pre-launch** | Sign in with Apple + Keychain | PKCE flow, store tokens with `kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly` |
-| **Pre-launch** | `PrivacyInfo.plist` | Required for App Store submission (iOS 17+) |
-| **Pre-launch** | Move game logic to Edge Functions | Prevent host-cheating; judge can't be gamed by a modified client |
+| Core game loop | Rooms, players, submissions, judge rotation | ✅ Done |
+| Quick chat | Supabase Broadcast toast overlay | ✅ Done |
+| AirPlay second screen | `TVGameView` on external `UIScreen` | ✅ Done |
+| Disconnect detection | Heartbeat + grace-timer eviction | ✅ Done |
+| CI/CD | Xcode Cloud + TestFlight automated builds | 🔲 Pending |
+| Sign in with Apple + Keychain | PKCE flow, persistent identity | 🔲 Pre-launch |
+| `PrivacyInfo.plist` | Required for App Store submission (iOS 17+) | 🔲 Pre-launch |
+| Supabase RLS (tighten) | Per-player row ownership, remove open policies | 🔲 Pre-launch |
+| Move game logic to Edge Functions | Cheat-resistant authoritative server | 🔲 Post-launch |
+| LiveKit voice chat | `client-sdk-swift` per-room audio | 🔲 Post-launch |
 
 ---
 
 ## Known prototype limitations
 
-- **No reconnection** — if you close the app during a game, rejoin via the room code (not yet implemented)
+- **No reconnection** — if a player is evicted (missed heartbeats) and returns, they land on the lobby screen; they cannot rejoin the in-progress game
 - **No card pool limits** — with many rounds, the 50-card white deck can be exhausted; add more cards or a shuffle/reset mechanism
 - **Host-driven logic** — the host client writes game state; in production, use Supabase Edge Functions as the authoritative game server
 - **No auth** — player identity is scoped to the app session; add Sign in with Apple for persistence and friend lists
