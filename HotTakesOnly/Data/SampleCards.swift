@@ -14,7 +14,7 @@ enum SampleCards {
         "The new horror movie is called ___.",
         "I got 99 problems but ___ ain't one.",
         "What did I bring to show-and-tell?",
-        "Step 1: ___. Step 2: ___. Step 3: Profit.",
+        "Step 1: ___. Step 2: Profit.",
         "What's the most passive-aggressive thing you own?",
         "This year's hot Halloween costume: ___.",
         "The secret ingredient is ___.",

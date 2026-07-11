@@ -15,16 +15,24 @@ final class GameViewModel: ObservableObject {
     @Published var myPlayer: Player?
     @Published var errorMessage: String?
     @Published var isLoading = false
+    @Published var shouldCancelGame = false
 
-    // MARK: - Voice
+    // MARK: - Voice (deferred — stub only)
 
     let voiceChat = LiveKitService()
+
+    // MARK: - Quick Chat
+
+    @Published var latestQuickChat: QuickChatMessage?
 
     // MARK: - Private
 
     private(set) var lastDisplayName: String = ""
     private var realtimeTask: Task<Void, Never>?
+    private var heartbeatTask: Task<Void, Never>?
     private var liveKitCancellable: AnyCancellable?
+    private var gameChannel: RealtimeChannelV2?
+    private var quickChatClearTask: Task<Void, Never>?
     private var supabase: SupabaseClient { SupabaseService.shared.client }
 
     init() {
@@ -87,6 +95,7 @@ final class GameViewModel: ObservableObject {
     // MARK: - Room lifecycle
 
     func createRoom(displayName: String) async {
+        await AuthService.shared.ensureSession()
         await run {
             let code = self.randomCode()
             let newRoom = NewRoom(code: code, maxRounds: 5)
@@ -112,11 +121,13 @@ final class GameViewModel: ObservableObject {
             self.players = [player]
             self.myPlayer = player
             self.subscribeToRealtime(roomId: room.id)
+            self.startHeartbeat()
             await self.voiceChat.connect(roomId: room.id.uuidString, displayName: displayName)
         }
     }
 
     func joinRoom(code: String, displayName: String) async {
+        await AuthService.shared.ensureSession()
         await run {
             let rooms: [Room] = try await self.supabase
                 .from("rooms")
@@ -151,19 +162,88 @@ final class GameViewModel: ObservableObject {
             self.players = existingPlayers
             self.myPlayer = player
             self.subscribeToRealtime(roomId: room.id)
+            self.startHeartbeat()
             await self.voiceChat.connect(roomId: room.id.uuidString, displayName: displayName)
         }
     }
 
     func leaveRoom() {
+        // Delete own player row so other clients detect the departure via Realtime
+        if let id = myPlayer?.id {
+            Task {
+                do {
+                    try await supabase
+                        .from("players")
+                        .delete()
+                        .eq("id", value: id.uuidString)
+                        .execute()
+                } catch {}
+            }
+        }
         voiceChat.disconnect()
+        heartbeatTask?.cancel()
+        heartbeatTask = nil
         realtimeTask?.cancel()
         realtimeTask = nil
+        quickChatClearTask?.cancel()
+        quickChatClearTask = nil
+        gameChannel = nil
         room = nil
         players = []
         submissions = []
         myPlayer = nil
         errorMessage = nil
+        latestQuickChat = nil
+        shouldCancelGame = false
+    }
+
+    func cancelGame() async {
+        guard let room else { leaveRoom(); return }
+        do {
+            try await supabase
+                .from("rooms")
+                .update(["status": GamePhase.finished.rawValue])
+                .eq("id", value: room.id.uuidString)
+                .execute()
+        } catch {}
+        leaveRoom()
+    }
+
+    private func promoteToHost(roomId: UUID) async {
+        // Only the first-joined remaining player promotes themselves to avoid races
+        let sorted = players.sorted { ($0.createdAt ?? .distantPast) < ($1.createdAt ?? .distantPast) }
+        guard let myPlayer, sorted.first?.id == myPlayer.id else { return }
+        do {
+            try await supabase
+                .from("players")
+                .update(["is_host": true])
+                .eq("id", value: myPlayer.id.uuidString)
+                .execute()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Quick Chat
+
+    func sendQuickChat(_ message: String) async {
+        let from = myPlayer?.displayName ?? lastDisplayName
+        showQuickChat(from: from, message: message)
+        guard let channel = gameChannel else { return }
+        await channel.broadcast(
+            event: "quickchat",
+            message: ["from": AnyJSON.string(from), "message": AnyJSON.string(message)]
+        )
+    }
+
+    private func showQuickChat(from: String, message: String) {
+        quickChatClearTask?.cancel()
+        latestQuickChat = QuickChatMessage(from: from, message: message)
+        quickChatClearTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard !Task.isCancelled else { return }
+            self?.latestQuickChat = nil
+        }
     }
 
     func playAgain() async {
@@ -332,6 +412,42 @@ final class GameViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Heartbeat
+
+    private func startHeartbeat() {
+        heartbeatTask?.cancel()
+        heartbeatTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
+                guard !Task.isCancelled, let self, let id = self.myPlayer?.id else { break }
+
+                // Ping our own row
+                do {
+                    try await self.supabase
+                        .from("players")
+                        .update(["last_ping": ISO8601DateFormatter().string(from: Date())])
+                        .eq("id", value: id.uuidString)
+                        .execute()
+                } catch {}
+
+                // Evict anyone who has gone silent. Fetch fresh from DB — the local
+                // self.players cache only updates on Realtime events, so its lastPing
+                // values can be stale and miss players who already stopped pinging.
+                guard let roomId = self.room?.id else { continue }
+                await self.evictStalePlayers(roomId: roomId)
+            }
+        }
+    }
+
+    private func evictStalePlayers(roomId: UUID) async {
+        struct Params: Encodable { let p_room_id: String }
+        do {
+            try await supabase
+                .rpc("evict_stale_players", params: Params(p_room_id: roomId.uuidString))
+                .execute()
+        } catch {}
+    }
+
     // MARK: - Realtime
 
     private func subscribeToRealtime(roomId: UUID) {
@@ -341,10 +457,12 @@ final class GameViewModel: ObservableObject {
             guard let self else { return }
 
             let channel = self.supabase.realtimeV2.channel("game:\(roomId.uuidString)")
+            self.gameChannel = channel
 
             let roomChanges       = channel.postgresChange(AnyAction.self, schema: "public", table: "rooms")
             let playerChanges     = channel.postgresChange(AnyAction.self, schema: "public", table: "players")
             let submissionChanges = channel.postgresChange(AnyAction.self, schema: "public", table: "submissions")
+            let quickChatStream   = channel.broadcastStream(event: "quickchat")
 
             do {
                 try await channel.subscribeWithError()
@@ -370,6 +488,18 @@ final class GameViewModel: ObservableObject {
                     for await _ in submissionChanges {
                         guard !Task.isCancelled else { return }
                         await self.refreshSubmissions(roomId: roomId)
+                    }
+                }
+                group.addTask {
+                    for await payload in quickChatStream {
+                        guard !Task.isCancelled else { return }
+                        if case let .object(inner) = payload["payload"],
+                           let fromJSON = inner["from"],
+                           let messageJSON = inner["message"],
+                           case let .string(from) = fromJSON,
+                           case let .string(message) = messageJSON {
+                            await self.showQuickChat(from: from, message: message)
+                        }
                     }
                 }
             }
@@ -402,10 +532,44 @@ final class GameViewModel: ObservableObject {
                 .order("created_at")
                 .execute()
                 .value
+
+            // If our own row was evicted by another client (stale heartbeat), leave cleanly.
+            if let myId = myPlayer?.id, !updated.contains(where: { $0.id == myId }) {
+                leaveRoom()
+                return
+            }
+
             self.players = updated
             if let id = myPlayer?.id {
                 self.myPlayer = updated.first(where: { $0.id == id })
             }
+
+            // If the host left, the earliest-joined remaining player promotes themselves.
+            // Return early — Realtime will fire again once the promotion write lands.
+            if myPlayer != nil, !updated.contains(where: { $0.isHost }) {
+                await promoteToHost(roomId: roomId)
+                return
+            }
+
+            // Only one player left during an active game — the game can't continue
+            let activePhases: Set<GamePhase> = [.submitting, .judging, .roundOver]
+            if updated.count <= 1, myPlayer?.isHost == true,
+               let status = room?.status, activePhases.contains(status) {
+                shouldCancelGame = true
+                return
+            }
+
+            // If the judge left during the submission phase and all remaining non-judges
+            // have already submitted, push the game into judging so it isn't stuck.
+            if room?.status == .submitting, myPlayer?.isHost == true, allNonJudgesSubmitted {
+                try await supabase
+                    .from("rooms")
+                    .update(["status": AnyJSON.string(GamePhase.judging.rawValue)])
+                    .eq("id", value: roomId.uuidString)
+                    .execute()
+                return
+            }
+
             if room?.status == .roundOver, allPlayersReady, myPlayer?.isHost == true {
                 await advanceRound()
             }

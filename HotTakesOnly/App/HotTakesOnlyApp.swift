@@ -2,17 +2,19 @@ import SwiftUI
 
 @main
 struct HotTakesOnlyApp: App {
-    @StateObject private var gameVM = GameViewModel()
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environmentObject(gameVM)
+                .environmentObject(appDelegate.gameVM)
+                .task {
+                    await AuthService.shared.ensureSession()
+                }
         }
     }
 }
 
-// Drives navigation purely from game state — no NavigationPath needed.
 struct RootView: View {
     @EnvironmentObject var gameVM: GameViewModel
 
@@ -30,5 +32,12 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: gameVM.room?.status)
+        .alert("Not Enough Players", isPresented: $gameVM.shouldCancelGame) {
+            Button("End Game", role: .destructive) {
+                Task { await gameVM.cancelGame() }
+            }
+        } message: {
+            Text("Everyone else has left. The game can't continue.")
+        }
     }
 }

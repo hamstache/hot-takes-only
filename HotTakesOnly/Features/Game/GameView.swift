@@ -3,13 +3,14 @@ import SwiftUI
 // Container that switches between sub-views based on game phase and role.
 struct GameView: View {
     @EnvironmentObject var gameVM: GameViewModel
+    @State private var showQuickChatMenu = false
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                GameHeader()
+                GameHeader(showQuickChatMenu: $showQuickChatMenu)
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
 
@@ -44,6 +45,7 @@ struct GameView: View {
                 Spacer()
             }
         }
+        .quickChatOverlay(showMenu: $showQuickChatMenu)
         .errorAlert(message: $gameVM.errorMessage)
     }
 
@@ -107,6 +109,7 @@ struct GameView: View {
 
 private struct GameHeader: View {
     @EnvironmentObject var gameVM: GameViewModel
+    @Binding var showQuickChatMenu: Bool
 
     var body: some View {
         HStack {
@@ -121,11 +124,32 @@ private struct GameHeader: View {
                 }
             }
             Spacer()
+            ReactionsButton(showMenu: $showQuickChatMenu)
+                .padding(.trailing, 6)
             if gameVM.voiceChat.isConnected {
                 PushToTalkButton()
                     .padding(.trailing, 8)
             }
             ScorePill()
+        }
+    }
+}
+
+private struct ReactionsButton: View {
+    @Binding var showMenu: Bool
+
+    var body: some View {
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                showMenu.toggle()
+            }
+        } label: {
+            Image(systemName: "face.smiling")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.7))
+                .padding(8)
+                .background(Color.white.opacity(0.08))
+                .clipShape(Circle())
         }
     }
 }
