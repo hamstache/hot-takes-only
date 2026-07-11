@@ -2,75 +2,145 @@ import SwiftUI
 
 struct WaitingRoomView: View {
     @EnvironmentObject var gameVM: GameViewModel
+    @Environment(\.horizontalSizeClass) private var hSizeClass
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            VStack(spacing: 24) {
-                // Room code
-                VStack(spacing: 4) {
+            if hSizeClass == .regular {
+                iPadLayout
+            } else {
+                phoneLayout
+            }
+        }
+        .errorAlert(message: $gameVM.errorMessage)
+    }
+
+    // MARK: - iPad layout (two-column)
+
+    private var iPadLayout: some View {
+        HStack(spacing: 0) {
+            // Left: room code + controls
+            VStack(spacing: 0) {
+                Spacer()
+
+                VStack(spacing: 8) {
                     Text("Room Code")
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.5))
                         .textCase(.uppercase)
                     Text(gameVM.room?.code ?? "------")
-                        .font(.system(size: 48, weight: .black, design: .monospaced))
+                        .font(.system(size: 64, weight: .black, design: .monospaced))
                         .foregroundStyle(.pink)
-                        .tracking(8)
-                }
-                .padding(.top, 48)
-
-                Divider().overlay(.white.opacity(0.15))
-
-                // Player list
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Players (\(gameVM.players.count))")
+                        .tracking(10)
+                    Text("Share this code with friends")
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.5))
-                        .textCase(.uppercase)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 8)
-
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            ForEach(gameVM.players) { player in
-                                PlayerRow(player: player, isSelf: player.id == gameVM.myPlayer?.id)
-                            }
-                        }
-                    }
+                        .foregroundStyle(.white.opacity(0.3))
                 }
 
                 Spacer()
 
-                // Host controls
-                VStack(spacing: 12) {
-                    if gameVM.myPlayer?.isHost == true {
-                        if gameVM.players.count < 2 {
-                            Text("Waiting for at least 1 more player…")
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.4))
-                        }
+                Divider().overlay(.white.opacity(0.08))
 
-                        HTButton("Start Game", color: .pink, isLoading: gameVM.isLoading) {
-                            await gameVM.startGame()
-                        }
-                        .disabled(gameVM.players.count < 2)
-                        .padding(.horizontal, 32)
-                    } else {
-                        Label("Waiting for host to start…", systemImage: "clock")
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-
-                    Button("Leave") {
-                        gameVM.leaveRoom()
-                    }
-                    .foregroundStyle(.white.opacity(0.3))
-                }
-                .padding(.bottom, 40)
+                hostControls
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 32)
             }
+            .frame(maxWidth: 340)
+            .background(Color.white.opacity(0.03))
+
+            Rectangle()
+                .fill(.white.opacity(0.08))
+                .frame(width: 1)
+
+            // Right: player list
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Players (\(gameVM.players.count))")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .textCase(.uppercase)
+                    .padding(.horizontal, 32)
+                    .padding(.top, 32)
+                    .padding(.bottom, 8)
+
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(gameVM.players) { player in
+                            PlayerRow(player: player, isSelf: player.id == gameVM.myPlayer?.id)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
         }
-        .errorAlert(message: $gameVM.errorMessage)
+    }
+
+    // MARK: - Phone layout
+
+    private var phoneLayout: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 4) {
+                Text("Room Code")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .textCase(.uppercase)
+                Text(gameVM.room?.code ?? "------")
+                    .font(.system(size: 48, weight: .black, design: .monospaced))
+                    .foregroundStyle(.pink)
+                    .tracking(8)
+            }
+            .padding(.top, 48)
+
+            Divider().overlay(.white.opacity(0.15))
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Players (\(gameVM.players.count))")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .textCase(.uppercase)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 8)
+
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(gameVM.players) { player in
+                            PlayerRow(player: player, isSelf: player.id == gameVM.myPlayer?.id)
+                        }
+                    }
+                }
+            }
+
+            Spacer()
+
+            hostControls
+                .padding(.horizontal, 32)
+                .padding(.bottom, 40)
+        }
+    }
+
+    // MARK: - Shared
+
+    private var hostControls: some View {
+        VStack(spacing: 12) {
+            if gameVM.myPlayer?.isHost == true {
+                if gameVM.players.count < 2 {
+                    Text("Waiting for at least 1 more player…")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+                HTButton("Start Game", color: .pink, isLoading: gameVM.isLoading) {
+                    await gameVM.startGame()
+                }
+                .disabled(gameVM.players.count < 2)
+            } else {
+                Label("Waiting for host to start…", systemImage: "clock")
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+
+            Button("Leave") { gameVM.leaveRoom() }
+                .foregroundStyle(.white.opacity(0.3))
+        }
     }
 }
 

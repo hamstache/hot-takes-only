@@ -1,5 +1,41 @@
 import SwiftUI
 
+// Read-only card view for non-judge players during the judging phase
+struct SpectatorJudgingView: View {
+    @EnvironmentObject var gameVM: GameViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Submitted answers")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .textCase(.uppercase)
+                Spacer()
+                Image(systemName: "hourglass")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .symbolEffect(.pulse)
+                Text("\(gameVM.currentJudge?.displayName ?? "Judge") is choosing…")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(gameVM.roundSubmissions) { submission in
+                        if let text = SampleCards.white[safe: submission.cardIndex] {
+                            WhiteCardView(text: text)
+                                .frame(width: 200)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        }
+    }
+}
+
 struct JudgingView: View {
     @EnvironmentObject var gameVM: GameViewModel
     @State private var selectedSubmission: Submission?

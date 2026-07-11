@@ -1,55 +1,108 @@
 import SwiftUI
 
-// Container that switches between sub-views based on game phase and role.
 struct GameView: View {
     @EnvironmentObject var gameVM: GameViewModel
+    @Environment(\.horizontalSizeClass) private var hSizeClass
     @State private var showQuickChatMenu = false
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                GameHeader(showQuickChatMenu: $showQuickChatMenu)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-
-                Divider()
-                    .overlay(.white.opacity(0.1))
-                    .padding(.vertical, 12)
-
-                // Black card always visible
-                if let card = gameVM.currentBlackCard {
-                    BlackCardView(text: card)
-                        .padding(.horizontal, 20)
-                }
-
-                Spacer().frame(height: 20)
-
-                // Phase-specific content
-                Group {
-                    switch gameVM.room?.status {
-                    case .submitting:
-                        submittingContent
-                    case .judging:
-                        judgingContent
-                    case .roundOver:
-                        RoundResultsView()
-                    default:
-                        EmptyView()
-                    }
-                }
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
-                .animation(.easeInOut(duration: 0.35), value: gameVM.room?.status)
-
-                Spacer()
+            if hSizeClass == .regular {
+                iPadLayout
+            } else {
+                phoneLayout
             }
         }
         .quickChatOverlay(showMenu: $showQuickChatMenu)
         .errorAlert(message: $gameVM.errorMessage)
     }
 
-    // MARK: - Phase content
+    // MARK: - iPad layout (two-column)
+
+    private var iPadLayout: some View {
+        HStack(spacing: 0) {
+            // Left: header + black card
+            VStack(spacing: 0) {
+                GameHeader(showQuickChatMenu: $showQuickChatMenu)
+                    .padding(.horizontal, 32)
+                    .padding(.top, 24)
+                    .padding(.bottom, 20)
+
+                Divider().overlay(.white.opacity(0.1))
+
+                Spacer().frame(height: 24)
+
+                if let card = gameVM.currentBlackCard {
+                    BlackCardView(text: card)
+                        .padding(.horizontal, 32)
+                }
+
+                Spacer()
+            }
+            .frame(maxWidth: 420)
+            .background(Color.white.opacity(0.02))
+
+            Rectangle()
+                .fill(.white.opacity(0.08))
+                .frame(width: 1)
+
+            // Right: phase content
+            VStack {
+                Spacer().frame(height: 24)
+                phaseContent
+                    .padding(.horizontal, 32)
+                Spacer()
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    // MARK: - Phone layout
+
+    private var phoneLayout: some View {
+        VStack(spacing: 0) {
+            GameHeader(showQuickChatMenu: $showQuickChatMenu)
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+
+            Divider()
+                .overlay(.white.opacity(0.1))
+                .padding(.vertical, 12)
+
+            if let card = gameVM.currentBlackCard {
+                BlackCardView(text: card)
+                    .padding(.horizontal, 20)
+            }
+
+            Spacer().frame(height: 20)
+
+            phaseContent
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Phase content (shared)
+
+    @ViewBuilder
+    private var phaseContent: some View {
+        Group {
+            switch gameVM.room?.status {
+            case .submitting:
+                submittingContent
+            case .judging:
+                judgingContent
+            case .roundOver:
+                RoundResultsView()
+            default:
+                EmptyView()
+            }
+        }
+        .transition(.opacity.combined(with: .move(edge: .bottom)))
+        .animation(.easeInOut(duration: 0.35), value: gameVM.room?.status)
+    }
 
     @ViewBuilder
     private var submittingContent: some View {
@@ -67,7 +120,7 @@ struct GameView: View {
                 SubmissionProgress()
                     .padding(.top, 8)
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, 12)
         } else if gameVM.hasSubmitted {
             VStack(spacing: 12) {
                 Image(systemName: "checkmark.circle.fill")
@@ -79,10 +132,10 @@ struct GameView: View {
                 SubmissionProgress()
                     .padding(.top, 8)
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, 12)
         } else {
             HandView()
-                .padding(.horizontal, 20)
+                .padding(.horizontal, hSizeClass == .regular ? 0 : 20)
         }
     }
 
@@ -90,17 +143,10 @@ struct GameView: View {
     private var judgingContent: some View {
         if gameVM.isJudge {
             JudgingView()
-                .padding(.horizontal, 20)
+                .padding(.horizontal, hSizeClass == .regular ? 0 : 20)
         } else {
-            VStack(spacing: 12) {
-                Image(systemName: "hourglass")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.orange)
-                    .symbolEffect(.pulse)
-                Text("\(gameVM.currentJudge?.displayName ?? "Judge") is choosing…")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-            }
+            SpectatorJudgingView()
+                .padding(.horizontal, hSizeClass == .regular ? 0 : 20)
         }
     }
 }
@@ -169,13 +215,9 @@ private struct PushToTalkButton: View {
             .simultaneousGesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in
-                        if !gameVM.voiceChat.isSpeaking {
-                            gameVM.voiceChat.beginSpeaking()
-                        }
+                        if !gameVM.voiceChat.isSpeaking { gameVM.voiceChat.beginSpeaking() }
                     }
-                    .onEnded { _ in
-                        gameVM.voiceChat.endSpeaking()
-                    }
+                    .onEnded { _ in gameVM.voiceChat.endSpeaking() }
             )
     }
 }

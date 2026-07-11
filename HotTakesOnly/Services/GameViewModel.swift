@@ -11,6 +11,7 @@ final class GameViewModel: ObservableObject {
 
     @Published var room: Room?
     @Published var players: [Player] = []
+    @Published var finalPlayers: [Player]? // frozen snapshot when game ends; survives player departures
     @Published var submissions: [Submission] = []
     @Published var myPlayer: Player?
     @Published var errorMessage: String?
@@ -190,6 +191,7 @@ final class GameViewModel: ObservableObject {
         gameChannel = nil
         room = nil
         players = []
+        finalPlayers = nil
         submissions = []
         myPlayer = nil
         errorMessage = nil
@@ -517,13 +519,18 @@ final class GameViewModel: ObservableObject {
                 .eq("id", value: roomId.uuidString)
                 .execute()
                 .value
-            self.room = rooms.first
+            let updated = rooms.first
+            if updated?.status == .finished, finalPlayers == nil {
+                finalPlayers = players  // freeze scores before anyone can leave
+            }
+            self.room = updated
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
     private func refreshPlayers(roomId: UUID) async {
+        guard finalPlayers == nil else { return } // game over — scores are frozen
         do {
             let updated: [Player] = try await supabase
                 .from("players")
@@ -608,6 +615,8 @@ final class GameViewModel: ObservableObject {
         defer { isLoading = false }
         do {
             try await action()
+        } catch is CancellationError {
+            // Task was cancelled (e.g. user left the room) — not an error worth showing
         } catch {
             errorMessage = error.localizedDescription
         }

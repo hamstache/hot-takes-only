@@ -1,7 +1,7 @@
 # Hot Takes Only 🔥
 
 A Cards Against Humanity-style iOS party game. Fully online, multiplayer, real-time.  
-This repo contains **Prototype v1** — the core game loop with Supabase Realtime sync.
+This repo contains **Prototype v3** — full auth, win celebrations, iPad layout, and expanded card deck.
 
 ---
 
@@ -14,7 +14,7 @@ This repo contains **Prototype v1** — the core game loop with Supabase Realtim
 | Backend | Supabase (Postgres + Realtime) | Sub-50ms broadcast latency, free at <50K MAU, SQL flexibility |
 | Real-time | Supabase `realtimeV2` channels (`postgres_changes`) | Event-driven game state — no polling |
 | Auth | Supabase Anonymous Auth + Sign in with Apple | Every device gets a JWT on launch; optional SIWA for persistent identity |
-| Cards | Hardcoded Swift arrays | No DB table needed for prototype; swap for user-generated content later |
+| Cards | Hardcoded Swift arrays (150 white / 40 black) | No DB table needed for prototype; swap for user-generated content later |
 
 ---
 
@@ -32,26 +32,27 @@ HotTakesOnly/
 │   ├── Player.swift              # Player + NewPlayer (includes last_ping for heartbeat)
 │   └── Submission.swift         # Submission + NewSubmission
 ├── Data/
-│   └── SampleCards.swift        # 15 black cards, 50 white cards + deal helpers
+│   └── SampleCards.swift        # 150 white cards, 40 black cards + deal helpers (deck wrap-around fallback)
 ├── Services/
 │   ├── SupabaseService.swift    # Singleton SupabaseClient wrapper
-│   ├── AuthService.swift        # Anonymous sign-in on launch + Sign in with Apple flow
+│   ├── AuthService.swift        # Anonymous sign-in on launch + SIWA + Keychain persistence
 │   ├── LiveKitService.swift     # LiveKit voice chat stub (deferred to post-launch)
 │   └── GameViewModel.swift      # All game logic, Supabase ops, Realtime subscriptions
 ├── Features/
 │   ├── Lobby/
-│   │   ├── LobbyView.swift       # Name entry + create/join flow
-│   │   └── WaitingRoomView.swift # Room code display + player list + Start button
+│   │   ├── LobbyView.swift       # Name entry + create/join; iPad two-column layout
+│   │   └── WaitingRoomView.swift # Room code + player list + Start button; iPad two-column layout
 │   ├── Game/
-│   │   ├── GameView.swift        # Phase container (submitting / judging / round-over)
-│   │   ├── FinalScoreView.swift  # End-of-game leaderboard
+│   │   ├── GameView.swift        # Phase container (submitting / judging / round-over); iPad two-column layout
+│   │   ├── FinalScoreView.swift  # End-of-game leaderboard + confetti fanfare + staggered animations
 │   │   └── Components/
 │   │       ├── BlackCardView.swift    # The prompt card (black)
 │   │       ├── WhiteCardView.swift    # Answer card (white, reused in hand + judging)
 │   │       ├── HandView.swift         # Horizontal scroll of player's hand
-│   │       ├── JudgingView.swift      # Judge picks winner from submitted cards
-│   │       ├── RoundResultsView.swift # Winner reveal + scoreboard
-│   │       ├── ScoreboardView.swift   # Sorted player scores
+│   │       ├── JudgingView.swift      # Judge picks winner; SpectatorJudgingView for non-judges
+│   │       ├── RoundResultsView.swift # Winner reveal + confetti for round winner + scoreboard
+│   │       ├── ScoreboardView.swift   # Sorted player scores (accepts frozen finalPlayers list)
+│   │       ├── ConfettiView.swift     # CAEmitterLayer confetti burst; trigger-based, layout-safe
 │   │       └── QuickChatOverlay.swift # Floating toast for broadcast quick-chat messages
 │   └── TV/
 │       ├── TVGameView.swift              # AirPlay second-screen game display
@@ -207,8 +208,14 @@ If it doesn't update, check:
 | Disconnect detection | Heartbeat + grace-timer eviction | ✅ Done |
 | Anonymous auth | Every device gets a JWT on launch via Supabase anon sign-in | ✅ Done |
 | Sign in with Apple | Optional SIWA flow; pre-fills name; App Store compliant | ✅ Done |
+| Keychain persistence | Apple user ID stored in Keychain; `isSignedInWithApple` survives reinstalls | ✅ Done |
 | `PrivacyInfo.plist` | Required privacy manifest for App Store (iOS 17+) | ✅ Done |
 | Supabase RLS (tighten) | Per-player row ownership; `evict_stale_players` RPC | ✅ Done |
+| Win celebrations | `ConfettiView` burst for round winner; full fanfare + haptic on final screen | ✅ Done |
+| Expanded card deck | 150 white / 40 black cards; deck wrap-around prevents empty hands | ✅ Done |
+| iPad layout | Two-column layout for Lobby, WaitingRoom, and GameView on iPad | ✅ Done |
+| Spectator judging view | Non-judge players see all submitted cards during judging phase | ✅ Done |
+| Frozen final scores | Player list snapshot on game end; winner persists after players leave | ✅ Done |
 | CI/CD | Xcode Cloud + TestFlight automated builds | 🔲 Pending |
 | App Store Connect | Bundle ID registration + team ID in Xcode | 🔲 Pending |
 | Move game logic to Edge Functions | Cheat-resistant authoritative server | 🔲 Post-launch |
@@ -219,7 +226,7 @@ If it doesn't update, check:
 ## Known prototype limitations
 
 - **No reconnection** — if a player is evicted (missed heartbeats) and returns, they land on the lobby screen; they cannot rejoin the in-progress game
-- **No card pool limits** — with many rounds, the 50-card white deck can be exhausted; add more cards or a shuffle/reset mechanism
+- **Card duplicates possible** — with very long games, the 150-card white deck may wrap around; some cards can repeat across rounds (by design — avoids empty hands)
 - **Host-driven logic** — the host client writes game state; in production, use Supabase Edge Functions as the authoritative game server
 - **Anonymous identity only by default** — player identity lasts for the app session; Sign in with Apple links it to a persistent Apple ID but friend lists and cross-session history are not yet built
 - **SIWA requires real device** — Sign in with Apple cannot be tested in the simulator; requires a physical device with an Apple ID and your Apple Developer team ID set in Xcode signing settings

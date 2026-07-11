@@ -19,9 +19,35 @@ enum SampleCards {
         "This year's hot Halloween costume: ___.",
         "The secret ingredient is ___.",
         "What will finally end the internet?",
+        "My love language is ___.",
+        "The secret to a happy life is ___.",
+        "What's in the fridge that definitely shouldn't be there?",
+        "During the job interview, I accidentally mentioned ___.",
+        "Scientists finally found what's missing from modern society: ___.",
+        "I finally understand my parents. It was ___ all along.",
+        "I've decided to rebrand myself as ___.",
+        "Forget therapy. I've been healing through ___.",
+        "Nothing ruins a first date faster than ___.",
+        "My autobiography will be called: ___.",
+        "TSA pulled me aside because of ___.",
+        "Forget Bitcoin. My retirement plan is ___.",
+        "The wedding toast ended awkwardly when someone mentioned ___.",
+        "___ hits different at 3 AM.",
+        "My spirit animal is ___.",
+        "The new Olympic sport is ___.",
+        "My dating profile says I enjoy ___.",
+        "I don't need sleep. I need ___.",
+        "The year is 2040. Every home now has ___.",
+        "The doctor said I need to cut back on ___.",
+        "Game shows would be better with more ___.",
+        "I've been sober from ___ for three weeks.",
+        "Breaking news: Local man arrested for ___.",
+        "What do we need more of in this world?",
+        "___ is the love language no one talks about.",
     ]
 
     static let white: [String] = [
+        // Original 50
         "Passive-aggressive sticky notes.",
         "A disappointing birthday party.",
         "The audacity.",
@@ -72,20 +98,132 @@ enum SampleCards {
         "Your browser history.",
         "A misplaced sense of urgency.",
         "The long pause before 'I mean…'",
+
+        // 100 new cards
+        "The guy at the party who owns exactly one Dave Matthews Band album.",
+        "Aggressively waving back at someone who was not waving at you.",
+        "An elaborate backstory for a stranger on the subway.",
+        "A seven-layer dip of lies.",
+        "Choosing the self-checkout line and immediately regretting it.",
+        "A breakup text sent from a hot tub.",
+        "The last person to leave a party.",
+        "An emergency therapy session about a TV character.",
+        "Referring to the gym as 'the gym'.",
+        "A LinkedIn connection request from God.",
+        "Watching the same show for the 4th time instead of doing anything productive.",
+        "Unexplained Wi-Fi network names.",
+        "A passive-aggressive Spotify playlist.",
+        "Crying at a commercial, on purpose.",
+        "The wrong vibe at the right time.",
+        "Pretending to check your phone to avoid eye contact.",
+        "A deeply personal hot take about cereal.",
+        "Leaving a voicemail that immediately makes you wish you hadn't.",
+        "The confidence of someone who has never been wrong once in their life.",
+        "Being personally victimized by autocorrect.",
+        "A restaurant with a QR code menu and no Wi-Fi.",
+        "The smell of someone else's drama.",
+        "Getting personally invested in a stranger's argument.",
+        "An unsolicited opinion about your order.",
+        "The inability to parallel park, even in your soul.",
+        "A slow clap that got out of hand.",
+        "Forgetting your reusable bag at home, again.",
+        "A meaningful glance from across a Costco.",
+        "A Pinterest board titled 'Me'.",
+        "An apology that's somehow also a threat.",
+        "The 4th glass of wine.",
+        "Ordering the salad and then eating someone else's fries.",
+        "A group chat that never should have existed.",
+        "The emotional support plant that died.",
+        "Being the only person who read the email.",
+        "Twelve open tabs and zero intentions.",
+        "The coworker who microwaves fish.",
+        "A vibe check that came back negative.",
+        "Texting 'haha' without actually laughing.",
+        "The audacity to charge a handling fee.",
+        "A motivational quote from someone who has never struggled.",
+        "Buying a book to seem like the kind of person who reads.",
+        "The neighborhood Facebook group.",
+        "Falling asleep in a meeting and pretending it didn't happen.",
+        "A fever dream that felt oddly relevant.",
+        "Saying 'sounds good' when it very much does not.",
+        "A deeply unnecessary collaboration.",
+        "Stress-eating in a very specific way.",
+        "Being aggressively fine.",
+        "A strongly-worded Yelp review about nothing important.",
+        "Unsubscribing from emails and somehow getting more emails.",
+        "The one person who replies-all to everything.",
+        "An imaginary argument that you definitely won.",
+        "The sound of someone opening a chip bag in a silent room.",
+        "A Pinterest fail with delusions of grandeur.",
+        "Telling a long story and forgetting the point halfway through.",
+        "A 'quick call' that lasts forty-five minutes.",
+        "The skeleton in everyone's closet.",
+        "Pretending to enjoy jazz.",
+        "A 6-second video that lives rent-free in your head.",
+        "Saying 'I'm not a morning person' as a personality trait.",
+        "The group project where you did everything.",
+        "An unreturned favor, tracked meticulously.",
+        "The holiday sweater that crosses a line.",
+        "Road rage, but on foot.",
+        "Liking your own post from five years ago.",
+        "A conspiracy theory that is very probably true.",
+        "Being personally offended by a thermostat setting.",
+        "Agreeing to plans you will definitely cancel.",
+        "A gas station sushi situation.",
+        "An over-explained birthday in a work Slack.",
+        "A very small but deeply personal inconvenience.",
+        "The ghost of a text message you should have sent.",
+        "Corporate speak for 'we screwed up'.",
+        "A subscription you forgot about until the charge hit.",
+        "A family photo where no one is looking at the camera.",
+        "The person who explains the joke.",
+        "Revenge snacking at 11 PM.",
+        "An extremely specific phobia.",
+        "Telling someone to 'circle back' and meaning it.",
+        "Crying in a car, parked, for fifteen minutes.",
+        "A decision that seemed smart at the time.",
+        "The most passive-aggressive Christmas card ever written.",
+        "Holding the door for someone who is still forty feet away.",
+        "A Venmo memo that requires an explanation.",
+        "Pretending to be asleep to avoid a conversation.",
+        "An overly competitive trivia team.",
+        "The face you make when you agree but absolutely do not agree.",
+        "Forgetting your coffee on top of the car.",
+        "A regrettable haircut with full commitment.",
+        "The loudest person in the quiet car.",
+        "Being hauntingly correct about something no one wanted to hear.",
+        "An unsettling birthday wish from an estranged relative.",
+        "The frozen pizza of emotional support.",
+        "Naming a star after an ex.",
+        "Oversharing with a stranger at the airport.",
+        "A detailed retelling of a dream no one asked about.",
+        "The second mouse to get the cheese.",
+        "An email signature that went too far.",
+        "The unread book stack that judges you silently.",
+        "A firm handshake from someone who definitely has something to prove.",
+        "Loudly announcing you don't watch TV.",
     ]
 
     // Returns `handSize` random indices not already in `usedIndices`.
+    // Falls back to the full deck if the supply runs low.
     static func dealHand(excluding usedIndices: Set<Int>) -> [Int] {
-        let available = (0..<white.count).filter { !usedIndices.contains($0) }
+        var available = (0..<white.count).filter { !usedIndices.contains($0) }
+        if available.count < handSize {
+            available = Array(0..<white.count)
+        }
         return Array(available.shuffled().prefix(handSize))
     }
 
     // Refill a player's hand up to `handSize`, avoiding indices already taken.
+    // Falls back to the full deck (keeping the player's current hand) if supply runs low.
     static func refillHand(current: [Int], excluding usedIndices: Set<Int>) -> [Int] {
         let needed = handSize - current.count
         guard needed > 0 else { return current }
         let all = Set(usedIndices).union(current)
-        let available = (0..<white.count).filter { !all.contains($0) }
+        var available = (0..<white.count).filter { !all.contains($0) }
+        if available.count < needed {
+            available = (0..<white.count).filter { !Set(current).contains($0) }
+        }
         let newCards = Array(available.shuffled().prefix(needed))
         return current + newCards
     }

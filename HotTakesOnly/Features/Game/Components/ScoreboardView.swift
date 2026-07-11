@@ -2,9 +2,10 @@ import SwiftUI
 
 struct ScoreboardView: View {
     @EnvironmentObject var gameVM: GameViewModel
+    var players: [Player]? // if nil, falls back to gameVM.players
 
     private var sortedPlayers: [Player] {
-        gameVM.players.sorted { $0.score > $1.score }
+        (players ?? gameVM.players).sorted { $0.score > $1.score }
     }
 
     var body: some View {

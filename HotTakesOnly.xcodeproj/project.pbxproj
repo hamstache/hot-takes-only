@@ -32,6 +32,7 @@
 		AA13BB14CC15DD16EE17FF18 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA07BB08CC09DD10EE11FF12 /* AppDelegate.swift */; };
 		AA25BB26CC27DD28EE29FF30 /* ExternalDisplaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA19BB20CC21DD22EE23FF24 /* ExternalDisplaySceneDelegate.swift */; };
 		BC08CD09DE10EF11FA121314 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC01CD02DE03EF04FA050607 /* AuthService.swift */; };
+		CF01CF02CF03CF04CF05CF06 /* ConfettiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF07CF08CF09CF0ACF0BCF0C /* ConfettiView.swift */; };
 		BC23CD24DE25EF26FA272829 /* PrivacyInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BC1CCD1DDE1EEF1FFA202122 /* PrivacyInfo.plist */; };
 		EFC583FE9B33D93ED3DE3EA2 /* SupabaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6427BBA3AA76156260408009 /* SupabaseConfig.swift */; };
 		F5D43DA102D69CC318656045 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A434466F424FFD5ACFCB48EF /* GameView.swift */; };
@@ -63,6 +64,7 @@
 		AA07BB08CC09DD10EE11FF12 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AA19BB20CC21DD22EE23FF24 /* ExternalDisplaySceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalDisplaySceneDelegate.swift; sourceTree = "<group>"; };
 		BC01CD02DE03EF04FA050607 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		CF07CF08CF09CF0ACF0BCF0C /* ConfettiView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiView.swift; sourceTree = "<group>"; };
 		BC15CD16DE17EF18FA191A1B /* HotTakesOnly.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HotTakesOnly.entitlements; sourceTree = "<group>"; };
 		BC1CCD1DDE1EEF1FFA202122 /* PrivacyInfo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.plist; sourceTree = "<group>"; };
 		E5C7C7C646D47C87F4082BF5 /* JudgingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JudgingView.swift; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 				427E04BA1295DE8552CF4C98 /* ScoreboardView.swift */,
 				9B28ACC2814518C9214AE536 /* WhiteCardView.swift */,
 				DFD27EE23001E98B0063050E /* QuickChatOverlay.swift */,
+				CF07CF08CF09CF0ACF0BCF0C /* ConfettiView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -317,6 +320,7 @@
 				EFC583FE9B33D93ED3DE3EA2 /* SupabaseConfig.swift in Sources */,
 				DA704484D8ED966074E8C4B7 /* SupabaseService.swift in Sources */,
 				DFD27EE33001E98B0063050E /* QuickChatOverlay.swift in Sources */,
+				CF01CF02CF03CF04CF05CF06 /* ConfettiView.swift in Sources */,
 				51BF51F66071436299D07A4D /* TVGameView.swift in Sources */,
 				AA13BB14CC15DD16EE17FF18 /* AppDelegate.swift in Sources */,
 				AA25BB26CC27DD28EE29FF30 /* ExternalDisplaySceneDelegate.swift in Sources */,
